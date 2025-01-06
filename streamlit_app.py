@@ -15,8 +15,11 @@ st.info(
 )
 
 # Initialize session states
-if "tour_started" not in st.session_state:
-    st.session_state.tour_started = False
+if "step" not in st.session_state:
+    st.session_state.step = 0  # Step 0: Initial state, Step 1: GPS retrieved
+
+if "location" not in st.session_state:
+    st.session_state.location = None
 
 if "messages" not in st.session_state:
     st.session_state.messages = [
@@ -67,22 +70,26 @@ def get_location():
             retries -= 1
         return None
 
-# Start Tour Button
-if st.button("Start Tour"):
-    st.session_state.tour_started = True
+# Double-Action Button Logic
+if st.session_state.step == 0:  # Step 0: GPS Retrieval
+    if st.button("Start Tour"):
+        location = get_location()
+        if location:
+            st.success("Geolocation Retrieved Successfully!")
+            st.session_state.location = location
+            st.session_state.step = 1  # Move to the next step
+        else:
+            st.error("Unable to retrieve geolocation. Please ensure location services are enabled.")
 
-# Process Tour
-if st.session_state.tour_started:
-    location = get_location()
+elif st.session_state.step == 1:  # Step 1: Push to OpenAI
+    lat = st.session_state.location["latitude"]
+    lon = st.session_state.location["longitude"]
 
-    if location:
-        st.success("Geolocation Retrieved Successfully!")
-        lat = location["latitude"]
-        lon = location["longitude"]
+    st.write(f"**Latitude:** {lat}")
+    st.write(f"**Longitude:** {lon}")
 
-        st.write(f"**Latitude:** {lat}")
-        st.write(f"**Longitude:** {lon}")
-
+    # Button to trigger OpenAI call
+    if st.button("Generate Tour"):
         # Prepare user input for OpenAI
         user_message = f"My current GPS coordinates are: Latitude {lat}, Longitude {lon}."
         st.session_state.messages.append({"role": "user", "content": user_message})
@@ -109,5 +116,6 @@ if st.session_state.tour_started:
             audio_file = text_to_speech(tour_guide_text)
             autoplay_audio(audio_file)
             os.remove(audio_file)
-    else:
-        st.error("Unable to retrieve geolocation. Please ensure location services are enabled.")
+
+        # Reset the steps for another tour
+        st.session_state.step = 0
