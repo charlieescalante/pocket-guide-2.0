@@ -2,6 +2,7 @@ import streamlit as st
 from openai import OpenAI
 from streamlit_geolocation import streamlit_geolocation
 import os
+import time
 import base64
 
 # Initialize OpenAI client
@@ -53,14 +54,26 @@ def autoplay_audio(file_path):
     """
     st.markdown(md, unsafe_allow_html=True)
 
+# Function: Retrieve Location
+def get_location():
+    with st.spinner("Fetching geolocation..."):
+        location = None
+        retries = 10  # Max retries to wait for the location
+        while retries > 0:
+            location = streamlit_geolocation()
+            if location and location["latitude"] and location["longitude"]:
+                return location
+            time.sleep(1)  # Wait before retrying
+            retries -= 1
+        return None
+
 # Start Tour Button
 if st.button("Start Tour"):
     st.session_state.tour_started = True
 
 # Process Tour
 if st.session_state.tour_started:
-    with st.spinner("Fetching geolocation..."):
-        location = streamlit_geolocation()
+    location = get_location()
 
     if location:
         st.success("Geolocation Retrieved Successfully!")
