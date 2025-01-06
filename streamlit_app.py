@@ -1,7 +1,6 @@
 import streamlit as st
 from openai import OpenAI
 from streamlit_geolocation import streamlit_geolocation
-from audio_recorder_streamlit import audio_recorder
 import os
 import base64
 
@@ -60,7 +59,8 @@ if st.button("Start Tour"):
 
 # Process Tour
 if st.session_state.tour_started:
-    location = streamlit_geolocation()
+    with st.spinner("Fetching geolocation..."):
+        location = streamlit_geolocation()
 
     if location:
         st.success("Geolocation Retrieved Successfully!")
@@ -96,6 +96,5 @@ if st.session_state.tour_started:
             audio_file = text_to_speech(tour_guide_text)
             autoplay_audio(audio_file)
             os.remove(audio_file)
-
     else:
-        st.warning("Click the button to fetch your geolocation.")
+        st.error("Unable to retrieve geolocation. Please ensure location services are enabled.")
