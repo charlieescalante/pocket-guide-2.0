@@ -62,15 +62,12 @@ def get_location():
     with st.spinner("Fetching geolocation..."):
         location = None
         retries = 10  # Max retries to wait for the location
-        attempt = 0  # Track attempts for unique keys
         while retries > 0:
-            # Assign a unique key based on the attempt number
-            location = streamlit_geolocation(key=f"loc_{attempt}")
+            location = streamlit_geolocation()  # No "key" used here
             if location and location["latitude"] and location["longitude"]:
                 return location
             time.sleep(1)  # Wait before retrying
             retries -= 1
-            attempt += 1
         return None
 
 # Double-Action Button Logic
