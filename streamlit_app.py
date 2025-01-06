@@ -2,7 +2,6 @@ import streamlit as st
 from openai import OpenAI
 from streamlit_geolocation import streamlit_geolocation
 import os
-import time
 import base64
 
 # Initialize OpenAI client
@@ -57,38 +56,25 @@ def autoplay_audio(file_path):
     """
     st.markdown(md, unsafe_allow_html=True)
 
-# Function: Retrieve Location
-def get_location():
-    with st.spinner("Fetching geolocation..."):
-        location = None
-        retries = 10  # Max retries to wait for the location
-        while retries > 0:
-            location = streamlit_geolocation()  # No "key" used here
-            if location and location["latitude"] and location["longitude"]:
-                return location
-            time.sleep(1)  # Wait before retrying
-            retries -= 1
-        return None
+# Step 0: Retrieve GPS Coordinates
+if st.session_state.step == 0:
+    st.write("Click the button below to fetch your location.")
+    location = streamlit_geolocation()
+    if location and location["latitude"] and location["longitude"]:
+        st.session_state.location = location
+        st.success("Geolocation Retrieved Successfully!")
+        st.session_state.step = 1  # Move to Step 1
+    else:
+        st.warning("Waiting for location...")
 
-# Double-Action Button Logic
-if st.session_state.step == 0:  # Step 0: GPS Retrieval
-    if st.button("Start Tour"):
-        location = get_location()
-        if location:
-            st.success("Geolocation Retrieved Successfully!")
-            st.session_state.location = location
-            st.session_state.step = 1  # Move to the next step
-        else:
-            st.error("Unable to retrieve geolocation. Please ensure location services are enabled.")
-
-elif st.session_state.step == 1:  # Step 1: Push to OpenAI
+# Step 1: Generate Tour
+elif st.session_state.step == 1:
     lat = st.session_state.location["latitude"]
     lon = st.session_state.location["longitude"]
 
     st.write(f"**Latitude:** {lat}")
     st.write(f"**Longitude:** {lon}")
 
-    # Button to trigger OpenAI call
     if st.button("Generate Tour"):
         # Prepare user input for OpenAI
         user_message = f"My current GPS coordinates are: Latitude {lat}, Longitude {lon}."
