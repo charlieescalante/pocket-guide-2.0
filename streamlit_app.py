@@ -98,9 +98,14 @@ elif st.session_state.step == 1:
                 st.write("**OpenAI Response:**")
                 st.json(chatresponse)
 
-                # Extract and display the assistant’s response
-                if "choices" in chatresponse and chatresponse.choices:
-                    tour_guide_text = chatresponse.choices[0].message.content
+                # Extract the assistant’s response
+                if (
+                    "choices" in chatresponse
+                    and len(chatresponse.choices) > 0
+                    and "message" in chatresponse.choices[0]
+                    and "content" in chatresponse.choices[0].message
+                ):
+                    tour_guide_text = chatresponse.choices[0].message.content.strip()
                     st.session_state.messages.append({"role": "assistant", "content": tour_guide_text})
 
                     st.write("---")
@@ -113,7 +118,7 @@ elif st.session_state.step == 1:
                         autoplay_audio(audio_file)
                         os.remove(audio_file)
                 else:
-                    st.error("Failed to generate a response. Please try again.")
+                    st.error("OpenAI returned an invalid response. Please try again.")
 
             except Exception as e:
                 st.error(f"An error occurred while communicating with OpenAI: {e}")
