@@ -1,0 +1,8 @@
+streamlit
+openai
+requests
+streamlit-js-eval
+streamlit-geolocation==0.0.10
+audio_recorder_streamlit
+streamlit-float
+python-dotenv
