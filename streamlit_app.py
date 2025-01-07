@@ -90,7 +90,7 @@ if st.session_state.tour_started:
         # Call OpenAI ChatCompletion
         with st.spinner("Generating your tour guide narration..."):
             chatresponse = client.chat.completions.create(
-                model="o1",
+                model="gpt-4o",
                 messages=st.session_state.messages,
                 temperature=1,
                 n=1,
