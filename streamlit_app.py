@@ -23,8 +23,7 @@ if "messages" not in st.session_state:
         {
             "role": "system",
             "content": (
-                "You are a tour guide. Provide detailed insights into a user's surroundings "
-                "based on GPS coordinates. Speak as though you've lived there your entire life, "
+                "You are a tour guide. Locate the city you come from through the longitude and laditude provided. Speak as though you've lived there your entire life, "
                 "with rich detail and history."
             ),
         }
@@ -33,8 +32,8 @@ if "messages" not in st.session_state:
 # Function: Text-to-Speech
 def text_to_speech(input_text):
     response = client.audio.speech.create(
-        model="tts-1",
-        voice="nova",
+        model="tts-1-hd",
+        voice="echo",
         input=input_text
     )
     audio_file_path = "temp_audio.mp3"
@@ -91,7 +90,7 @@ if st.session_state.tour_started:
         # Call OpenAI ChatCompletion
         with st.spinner("Generating your tour guide narration..."):
             chatresponse = client.chat.completions.create(
-                model="gpt-4",
+                model="o1",
                 messages=st.session_state.messages,
                 temperature=1,
                 n=1,
