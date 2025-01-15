@@ -5,7 +5,7 @@ from streamlit_geolocation import streamlit_geolocation
 
 # Initialize services
 geolocator = Nominatim(user_agent=st.secrets["USER_AGENT"], timeout=10)
-client = OpenAI(api_key=st.secrets['OPENAI_API_Key'])
+client = OpenAI(api_key=st.secrets["OPENAI_API_Key"])
 
 # App title and intro
 st.title("PocketGuide with Reverse Geocoding")
@@ -16,7 +16,10 @@ st.info(
 # Initialize session states
 if "tour_started" not in st.session_state:
     st.session_state.tour_started = False
-
+if "location" not in st.session_state:
+    st.session_state.location = None
+if "address" not in st.session_state:
+    st.session_state.address = None
 if "messages" not in st.session_state:
     st.session_state.messages = [
         {
@@ -30,58 +33,54 @@ if "messages" not in st.session_state:
         }
     ]
 
-# Create a "Start Tour" button
+# "Start Tour" button
 if st.button("Start Tour"):
     st.session_state.tour_started = True
 
-# If user clicked on "Start Tour", retrieve location and process
+# Geolocation retrieval
 if st.session_state.tour_started:
     location = streamlit_geolocation()
-
     if location:
         st.success("Geolocation Retrieved Successfully!")
-        lat = location["latitude"]
-        lon = location["longitude"]
-
-        st.write(f"**Latitude:** {lat}")
-        st.write(f"**Longitude:** {lon}")
-
-        # Reverse Geocode to get the address
-        try:
-            reverse_location = geolocator.reverse(f"{lat}, {lon}")
-            if reverse_location:
-                address = reverse_location.raw['display_name']
-                # Display the resolved address immediately
-                st.write(f"**Resolved Address:** {address}")
-            else:
-                address = None
-                st.warning("No address found for the given coordinates.")
-        except Exception as e:
-            address = None
-            st.error(f"Error during reverse geocoding: {e}")
-
-        # Send only the address to OpenAI if resolved
-        if address:
-            user_message = f"I am currently at: {address}."
-            st.session_state.messages.append({"role": "user", "content": user_message})
-
-            # Call OpenAI API with the address
-            with st.spinner("Generating your tour guide narration..."):
-                try:
-                    chatresponse = client.chat.completions.create(
-                        model='chatgpt-4o-latest',
-                        messages=st.session_state.messages,
-                        temperature=1,
-                        n=1,
-                    )
-                    tour_guide_text = chatresponse.choices[0].message.content
-                    st.session_state.messages.append({"role": "assistant", "content": tour_guide_text})
-                    st.write("---")
-                    st.markdown("#### Your PocketGuide says:")
-                    st.write(tour_guide_text)
-                except Exception as e:
-                    st.error(f"Error during AI processing: {e}")
-        else:
-            st.warning("Address could not be resolved. Unable to provide insights.")
+        st.session_state["location"] = location
+        st.write(f"**Latitude:** {location['latitude']}")
+        st.write(f"**Longitude:** {location['longitude']}")
     else:
         st.warning("Click the button to fetch your geolocation.")
+
+# "Reverse Geocode" button
+if st.button("Reverse Geocode Address") and st.session_state.get("location"):
+    location = st.session_state["location"]
+    lat, lon = location["latitude"], location["longitude"]
+    try:
+        reverse_location = geolocator.reverse(f"{lat}, {lon}")
+        if reverse_location:
+            address = reverse_location.raw["display_name"]
+            st.write(f"**Resolved Address:** {address}")
+            st.session_state["address"] = address
+        else:
+            st.warning("No address found for the given coordinates.")
+    except Exception as e:
+        st.error(f"Error during reverse geocoding: {e}")
+
+# "Generate Tour Narration" button
+if st.button("Generate Tour Narration") and st.session_state.get("address"):
+    address = st.session_state["address"]
+    user_message = f"I am currently at: {address}."
+    st.session_state.messages.append({"role": "user", "content": user_message})
+
+    with st.spinner("Generating your tour guide narration..."):
+        try:
+            chatresponse = client.chat.completions.create(
+                model="chatgpt-4o-latest",
+                messages=st.session_state.messages,
+                temperature=1,
+                n=1,
+            )
+            tour_guide_text = chatresponse.choices[0].message.content
+            st.session_state.messages.append({"role": "assistant", "content": tour_guide_text})
+            st.write("---")
+            st.markdown("#### Your PocketGuide says:")
+            st.write(tour_guide_text)
+        except Exception as e:
+            st.error(f"Error during AI processing: {e}")
