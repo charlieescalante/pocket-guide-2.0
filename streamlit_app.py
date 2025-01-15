@@ -51,6 +51,7 @@ if st.session_state.tour_started:
             reverse_location = geolocator.reverse(f"{lat}, {lon}")
             if reverse_location:
                 address = reverse_location.raw['display_name']
+                # Display the resolved address
                 st.write(f"**Resolved Address:** {address}")
             else:
                 address = None
